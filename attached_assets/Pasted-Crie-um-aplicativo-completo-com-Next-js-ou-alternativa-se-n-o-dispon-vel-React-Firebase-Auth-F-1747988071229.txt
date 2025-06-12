@@ -1,0 +1,62 @@
+Crie um aplicativo completo com Next.js (ou alternativa se não disponível), React, Firebase (Auth, Firestore, Storage) e TailwindCSS com as seguintes funcionalidades:
+
+📌 1. Login e Cadastro
+- Usar Firebase Authentication.
+- Página inicial `/` com inputs de e-mail e senha.
+- Se login falhar, cria conta automaticamente.
+- Após login, redireciona para `/perfil`.
+
+📌 2. Página `/perfil` – Criação de Perfil
+- Usuário preenche nome, bio, e envia imagem de perfil.
+- Upload da imagem para Firebase Storage.
+- Dados salvos no Firestore na coleção `usuarios`.
+- Após salvar, redireciona para `/criar`.
+
+📌 3. Página `/criar` – Criação de Cartão Digital
+- Formulário para criar cartão com campos:
+  - Nome
+  - Bio
+  - Telefone
+  - Email
+  - Website
+  - Redes sociais (Instagram, LinkedIn, etc)
+- Cartão é salvo na coleção `cartoes` com ID do usuário.
+- Após criar, redireciona para `/cartao/[id]`.
+
+📌 4. Página `/cartao/[id]` – Visualização do Cartão
+- Exibe o cartão digital com visual bonito.
+- Mostrar imagem, nome, bio, ícones sociais, botão copiar link, etc.
+- Design responsivo com animações (Framer Motion opcional).
+- Permitir editar se for o dono do cartão.
+
+📌 5. Admin Panel `/admin`
+- Somente acessível para usuários cujo e-mail termina com `@admin.com`.
+- Lista todos os cartões com botões para:
+  - Ver cartão
+  - Editar
+  - Deletar
+
+📌 6. Componentização
+- Componente `CriarCartao` dentro de `/components`.
+- Componente `CardPreview` para mostrar cartão interativo.
+- Reutilizar componentes onde possível.
+
+📌 7. Firebase Configuração
+- Usar `.env.local` com as chaves do Firebase.
+- Arquivo `firebase.ts` para exportar auth, db, storage.
+
+📌 8. Design
+- TailwindCSS para estilização.
+- Cores modernas (azul claro, branco, cinza).
+- Botões com hover animado, responsivo para celular.
+- Upload de imagem bonito.
+- Animação ao copiar link (`Copiado!`).
+
+📌 9. Extras
+- Middleware de verificação de login para proteger rotas.
+- Campo de busca no admin para pesquisar cartões por nome.
+
+Gere a estrutura de pastas e arquivos completa.
+Inclua também os arquivos principais: `firebase.ts`, `tailwind.config.js`, `.env.example`.
+
+Este app será usado para criar cartões digitais NFC com login, perfil, criação e visualização de cartão, e um painel admin.
