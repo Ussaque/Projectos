@@ -142,7 +142,7 @@ const Index = () => {
         <AddTransactionForm onAdd={handleAdd} />
         <FinanceSummary {...summary} />
         <CategoryPieChart data={pieData} />
-        <FinanceChart />
+        <FinanceChart transactions={transactions} year={period.year} />
         <TransactionList transactions={filteredTransactions} />
         <MadeWithDyad />
       </div>
