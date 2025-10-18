@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import FinanceSummary from "@/components/FinanceSummary";
 import FinanceChart from "@/components/FinanceChart";
 import TransactionList from "@/components/TransactionList";
@@ -10,73 +10,9 @@ import EditTransactionModal from "@/components/EditTransactionModal";
 import { months } from "@/utils/months";
 import { toast } from "sonner";
 
-// Dados de exemplo (normalmente viriam de um backend)
-const initialTransactions = [
-  {
-    id: 1,
-    descricao: "Salário (M-Pesa)",
-    valor: 7000,
-    tipo: "receita",
-    data: "2024-06-01",
-    categoria: "Salário",
-    carteira: "M-Pesa",
-  },
-  {
-    id: 2,
-    descricao: "Compra no Mercado Central",
-    valor: 1200,
-    tipo: "despesa",
-    data: "2024-06-03",
-    categoria: "Alimentação",
-    carteira: "M-Pesa",
-  },
-  {
-    id: 3,
-    descricao: "Recarga Movitel",
-    valor: 200,
-    tipo: "despesa",
-    data: "2024-06-05",
-    categoria: "Comunicações",
-    carteira: "M-Pesa",
-  },
-  {
-    id: 4,
-    descricao: "Transferência recebida (e-Mola)",
-    valor: 1000,
-    tipo: "receita",
-    data: "2024-06-07",
-    categoria: "Transferência",
-    carteira: "e-Mola",
-  },
-  {
-    id: 5,
-    descricao: "Transporte (Chapa 100)",
-    valor: 100,
-    tipo: "despesa",
-    data: "2024-06-08",
-    categoria: "Transporte",
-    carteira: "M-Pesa",
-  },
-  {
-    id: 6,
-    descricao: "Supermercado Shoprite",
-    valor: 800,
-    tipo: "despesa",
-    data: "2024-05-15",
-    categoria: "Alimentação",
-    carteira: "Banco",
-  },
-  {
-    id: 7,
-    descricao: "Internet Vodacom",
-    valor: 500,
-    tipo: "despesa",
-    data: "2024-06-10",
-    categoria: "Comunicações",
-    carteira: "Banco",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 
+// Funções utilitárias para mês/ano
 const getMonth = (dateStr: string) => Number(dateStr.split("-")[1]);
 const getYear = (dateStr: string) => Number(dateStr.split("-")[0]);
 
@@ -86,38 +22,92 @@ const Index = () => {
     month: now.getMonth() + 1,
     year: now.getFullYear(),
   });
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Modal de edição
-  const [editTx, setEditTx] = useState<null | typeof initialTransactions[0]>(null);
+  const [editTx, setEditTx] = useState<null | any>(null);
   const [editOpen, setEditOpen] = useState(false);
 
+  // Carrega transações do backend
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API_URL}/transacoes`)
+      .then(res => res.json())
+      .then(data => {
+        setTransactions(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        toast.error("Erro ao carregar transações do servidor.");
+        setLoading(false);
+      });
+  }, []);
+
   // Adiciona nova transação
-  const handleAdd = (tx: Omit<typeof initialTransactions[0], "id">) => {
-    setTransactions((prev) => [
-      { ...tx, id: prev.length ? Math.max(...prev.map(t => t.id)) + 1 : 1 },
-      ...prev,
-    ]);
+  const handleAdd = (tx: Omit<any, "id">) => {
+    fetch(`${API_URL}/transacoes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tx),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          setTransactions(prev => [
+            { ...tx, id: data.id },
+            ...prev,
+          ]);
+          toast.success("Transação adicionada!");
+        } else {
+          toast.error("Erro ao adicionar transação.");
+        }
+      })
+      .catch(() => toast.error("Erro ao adicionar transação."));
   };
 
   // Edita transação existente
-  const handleEdit = (tx: typeof initialTransactions[0]) => {
+  const handleEdit = (tx: any) => {
     setEditTx(tx);
     setEditOpen(true);
   };
 
-  const handleSaveEdit = (tx: typeof initialTransactions[0]) => {
-    setTransactions((prev) =>
-      prev.map((item) => (item.id === tx.id ? tx : item))
-    );
-    toast.success("Transação atualizada!");
+  const handleSaveEdit = (tx: any) => {
+    fetch(`${API_URL}/transacoes/${tx.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tx),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setTransactions(prev =>
+            prev.map(item => (item.id === tx.id ? tx : item))
+          );
+          toast.success("Transação atualizada!");
+        } else {
+          toast.error("Erro ao atualizar transação.");
+        }
+      })
+      .catch(() => toast.error("Erro ao atualizar transação."));
   };
 
   // Remove transação
   const handleDelete = (id: number) => {
     if (window.confirm("Tem certeza que deseja apagar esta transação?")) {
-      setTransactions((prev) => prev.filter((tx) => tx.id !== id));
-      toast.success("Transação removida!");
+      fetch(`${API_URL}/transacoes/${id}`, {
+        method: "DELETE",
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setTransactions(prev => prev.filter(tx => tx.id !== id));
+            toast.success("Transação removida!");
+          } else {
+            toast.error("Erro ao remover transação.");
+          }
+        })
+        .catch(() => toast.error("Erro ao remover transação."));
     }
   };
 
@@ -135,10 +125,10 @@ const Index = () => {
   const summary = useMemo(() => {
     const receitas = filteredTransactions
       .filter((tx) => tx.tipo === "receita")
-      .reduce((acc, tx) => acc + tx.valor, 0);
+      .reduce((acc, tx) => acc + Number(tx.valor), 0);
     const despesas = filteredTransactions
       .filter((tx) => tx.tipo === "despesa")
-      .reduce((acc, tx) => acc + tx.valor, 0);
+      .reduce((acc, tx) => acc + Number(tx.valor), 0);
     return {
       saldo: receitas - despesas,
       receitas,
@@ -153,7 +143,7 @@ const Index = () => {
     filteredTransactions
       .filter((tx) => tx.tipo === "despesa")
       .forEach((tx) => {
-        catMap[tx.categoria] = (catMap[tx.categoria] || 0) + tx.valor;
+        catMap[tx.categoria] = (catMap[tx.categoria] || 0) + Number(tx.valor);
       });
     return Object.entries(catMap).map(([name, value]) => ({ name, value }));
   }, [filteredTransactions]);
@@ -170,11 +160,15 @@ const Index = () => {
         <FinanceSummary {...summary} />
         <CategoryPieChart data={pieData} />
         <FinanceChart transactions={transactions} year={period.year} />
-        <TransactionList
-          transactions={filteredTransactions}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Carregando transações...</div>
+        ) : (
+          <TransactionList
+            transactions={filteredTransactions}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
         <EditTransactionModal
           transaction={editTx}
           open={editOpen}
