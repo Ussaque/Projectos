@@ -53,7 +53,7 @@ export const AddTransactionForm = ({
   const [descricao, setDescricao] = useState(initialValues?.descricao || "");
   const [valor, setValor] = useState(initialValues?.valor?.toString() || "");
   const [categoria, setCategoria] = useState(initialValues?.categoria || categorias[0]);
-  const [carteira, setCarteira] = useState(initialValues?.carteira || carteiras[0]);
+  const [carteira, setCarteira] = useState(initialValues?.carteira || "");
   const [data, setData] = useState(initialValues?.data || (() => {
     const now = new Date();
     return now.toISOString().slice(0, 10);
@@ -70,23 +70,34 @@ export const AddTransactionForm = ({
     }
   }, [initialValues]);
 
+  // Limpa carteira se mudar para receita
+  useEffect(() => {
+    if (tipo === "receita") {
+      setCarteira("");
+    } else if (tipo === "despesa" && !carteira) {
+      setCarteira(carteiras[0]);
+    }
+    // eslint-disable-next-line
+  }, [tipo]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!descricao || !valor || !categoria || !carteira || !data) return;
+    if (!descricao || !valor || !categoria || !data) return;
+    if (tipo === "despesa" && !carteira) return;
     onAdd({
       descricao,
       valor: Number(valor),
       tipo,
       data,
       categoria,
-      carteira,
+      carteira: tipo === "despesa" ? carteira : "",
     });
     showSuccess(submitLabel === "Adicionar" ? "Transação adicionada!" : "Transação atualizada!");
     if (!initialValues) {
       setDescricao("");
       setValor("");
       setCategoria(categorias[0]);
-      setCarteira(carteiras[0]);
+      setCarteira("");
       setTipo("despesa");
       setData(new Date().toISOString().slice(0, 10));
     }
@@ -138,10 +149,15 @@ export const AddTransactionForm = ({
         </Select>
       </div>
       <div>
-        <label className="block text-xs mb-1">Carteira</label>
-        <Select value={carteira} onValueChange={setCarteira}>
+        <label className="block text-xs mb-1">Carteira {tipo === "despesa" && <span className="text-red-500">*</span>}</label>
+        <Select
+          value={carteira}
+          onValueChange={setCarteira}
+          disabled={tipo === "receita"}
+          required={tipo === "despesa"}
+        >
           <SelectTrigger>
-            <SelectValue placeholder="Carteira" />
+            <SelectValue placeholder={tipo === "despesa" ? "Carteira" : "Não necessário"} />
           </SelectTrigger>
           <SelectContent>
             {carteiras.map(c => (
