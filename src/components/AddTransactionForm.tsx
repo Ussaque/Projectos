@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -33,18 +33,42 @@ type AddTransactionFormProps = {
     categoria: string;
     carteira: string;
   }) => void;
+  initialValues?: {
+    descricao: string;
+    valor: number;
+    tipo: "receita" | "despesa";
+    data: string;
+    categoria: string;
+    carteira: string;
+  };
+  submitLabel?: string;
 };
 
-export const AddTransactionForm = ({ onAdd }: AddTransactionFormProps) => {
-  const [tipo, setTipo] = useState<"receita" | "despesa">("despesa");
-  const [descricao, setDescricao] = useState("");
-  const [valor, setValor] = useState("");
-  const [categoria, setCategoria] = useState(categorias[0]);
-  const [carteira, setCarteira] = useState(carteiras[0]);
-  const [data, setData] = useState(() => {
+export const AddTransactionForm = ({
+  onAdd,
+  initialValues,
+  submitLabel = "Adicionar",
+}: AddTransactionFormProps) => {
+  const [tipo, setTipo] = useState<"receita" | "despesa">(initialValues?.tipo || "despesa");
+  const [descricao, setDescricao] = useState(initialValues?.descricao || "");
+  const [valor, setValor] = useState(initialValues?.valor?.toString() || "");
+  const [categoria, setCategoria] = useState(initialValues?.categoria || categorias[0]);
+  const [carteira, setCarteira] = useState(initialValues?.carteira || carteiras[0]);
+  const [data, setData] = useState(initialValues?.data || (() => {
     const now = new Date();
     return now.toISOString().slice(0, 10);
-  });
+  })());
+
+  useEffect(() => {
+    if (initialValues) {
+      setTipo(initialValues.tipo);
+      setDescricao(initialValues.descricao);
+      setValor(initialValues.valor.toString());
+      setCategoria(initialValues.categoria);
+      setCarteira(initialValues.carteira);
+      setData(initialValues.data);
+    }
+  }, [initialValues]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,13 +81,15 @@ export const AddTransactionForm = ({ onAdd }: AddTransactionFormProps) => {
       categoria,
       carteira,
     });
-    showSuccess("Transação adicionada!");
-    setDescricao("");
-    setValor("");
-    setCategoria(categorias[0]);
-    setCarteira(carteiras[0]);
-    setTipo("despesa");
-    setData(new Date().toISOString().slice(0, 10));
+    showSuccess(submitLabel === "Adicionar" ? "Transação adicionada!" : "Transação atualizada!");
+    if (!initialValues) {
+      setDescricao("");
+      setValor("");
+      setCategoria(categorias[0]);
+      setCarteira(carteiras[0]);
+      setTipo("despesa");
+      setData(new Date().toISOString().slice(0, 10));
+    }
   };
 
   return (
@@ -134,7 +160,7 @@ export const AddTransactionForm = ({ onAdd }: AddTransactionFormProps) => {
         />
       </div>
       <div className="sm:col-span-2">
-        <Button type="submit" className="w-full">Adicionar</Button>
+        <Button type="submit" className="w-full">{submitLabel}</Button>
       </div>
     </form>
   );

@@ -6,7 +6,9 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { PeriodFilter, Period } from "@/components/PeriodFilter";
 import CategoryPieChart from "@/components/CategoryPieChart";
 import AddTransactionForm from "@/components/AddTransactionForm";
+import EditTransactionModal from "@/components/EditTransactionModal";
 import { months } from "@/utils/months";
+import { toast } from "sonner";
 
 // Dados de exemplo (normalmente viriam de um backend)
 const initialTransactions = [
@@ -86,12 +88,37 @@ const Index = () => {
   });
   const [transactions, setTransactions] = useState(initialTransactions);
 
+  // Modal de edição
+  const [editTx, setEditTx] = useState<null | typeof initialTransactions[0]>(null);
+  const [editOpen, setEditOpen] = useState(false);
+
   // Adiciona nova transação
   const handleAdd = (tx: Omit<typeof initialTransactions[0], "id">) => {
     setTransactions((prev) => [
       { ...tx, id: prev.length ? Math.max(...prev.map(t => t.id)) + 1 : 1 },
       ...prev,
     ]);
+  };
+
+  // Edita transação existente
+  const handleEdit = (tx: typeof initialTransactions[0]) => {
+    setEditTx(tx);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = (tx: typeof initialTransactions[0]) => {
+    setTransactions((prev) =>
+      prev.map((item) => (item.id === tx.id ? tx : item))
+    );
+    toast.success("Transação atualizada!");
+  };
+
+  // Remove transação
+  const handleDelete = (id: number) => {
+    if (window.confirm("Tem certeza que deseja apagar esta transação?")) {
+      setTransactions((prev) => prev.filter((tx) => tx.id !== id));
+      toast.success("Transação removida!");
+    }
   };
 
   // Filtra transações pelo período selecionado
@@ -143,7 +170,17 @@ const Index = () => {
         <FinanceSummary {...summary} />
         <CategoryPieChart data={pieData} />
         <FinanceChart transactions={transactions} year={period.year} />
-        <TransactionList transactions={filteredTransactions} />
+        <TransactionList
+          transactions={filteredTransactions}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+        <EditTransactionModal
+          transaction={editTx}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSave={handleSaveEdit}
+        />
         <MadeWithDyad />
       </div>
     </div>

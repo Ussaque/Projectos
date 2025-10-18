@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Transaction = {
   id: number;
@@ -14,9 +15,11 @@ type Transaction = {
 
 type TransactionListProps = {
   transactions: Transaction[];
+  onEdit?: (tx: Transaction) => void;
+  onDelete?: (id: number) => void;
 };
 
-export const TransactionList = ({ transactions }: TransactionListProps) => (
+export const TransactionList = ({ transactions, onEdit, onDelete }: TransactionListProps) => (
   <Card>
     <CardHeader>
       <CardTitle>Transações Recentes</CardTitle>
@@ -27,7 +30,7 @@ export const TransactionList = ({ transactions }: TransactionListProps) => (
           <li className="py-4 text-center text-muted-foreground">Nenhuma transação neste período.</li>
         )}
         {transactions.map((tx) => (
-          <li key={tx.id} className="flex items-center justify-between py-3">
+          <li key={tx.id} className="flex items-center justify-between py-3 gap-2">
             <div>
               <div className="font-medium">{tx.descricao}</div>
               <div className="text-xs text-muted-foreground">
@@ -43,6 +46,28 @@ export const TransactionList = ({ transactions }: TransactionListProps) => (
                 {tx.tipo === "receita" ? <ArrowDown className="w-4 h-4 mr-1" /> : <ArrowUp className="w-4 h-4 mr-1" />}
                 {tx.tipo === "receita" ? "Receita" : "Despesa"}
               </Badge>
+              {onEdit && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-blue-600"
+                  onClick={() => onEdit(tx)}
+                  aria-label="Editar"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-red-600"
+                  onClick={() => onDelete(tx.id)}
+                  aria-label="Apagar"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </li>
         ))}
