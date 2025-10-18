@@ -5,10 +5,11 @@ import TransactionList from "@/components/TransactionList";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { PeriodFilter, Period } from "@/components/PeriodFilter";
 import CategoryPieChart from "@/components/CategoryPieChart";
+import AddTransactionForm from "@/components/AddTransactionForm";
 import { months } from "@/utils/months";
 
 // Dados de exemplo (normalmente viriam de um backend)
-const allTransactions = [
+const initialTransactions = [
   {
     id: 1,
     descricao: "Salário (M-Pesa)",
@@ -83,15 +84,24 @@ const Index = () => {
     month: now.getMonth() + 1,
     year: now.getFullYear(),
   });
+  const [transactions, setTransactions] = useState(initialTransactions);
+
+  // Adiciona nova transação
+  const handleAdd = (tx: Omit<typeof initialTransactions[0], "id">) => {
+    setTransactions((prev) => [
+      { ...tx, id: prev.length ? Math.max(...prev.map(t => t.id)) + 1 : 1 },
+      ...prev,
+    ]);
+  };
 
   // Filtra transações pelo período selecionado
   const filteredTransactions = useMemo(
     () =>
-      allTransactions.filter(
+      transactions.filter(
         (tx) =>
           getMonth(tx.data) === period.month && getYear(tx.data) === period.year
       ),
-    [period]
+    [period, transactions]
   );
 
   // Calcula resumo financeiro
@@ -129,6 +139,7 @@ const Index = () => {
           Acompanhe suas finanças em Moçambique: receitas, despesas e transações recentes.
         </p>
         <PeriodFilter period={period} onChange={setPeriod} />
+        <AddTransactionForm onAdd={handleAdd} />
         <FinanceSummary {...summary} />
         <CategoryPieChart data={pieData} />
         <FinanceChart />
